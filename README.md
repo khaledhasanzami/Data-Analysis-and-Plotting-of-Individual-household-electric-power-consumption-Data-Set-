@@ -155,4 +155,144 @@ There is a argument called **colclass** to determine the class we want the data 
 power_consumption_data <- read.table("./data/household_power_consumption.txt", header=TRUE, sep=";", na.strings = "?", colClasses = c('character','character','numeric','numeric','numeric','numeric','numeric','numeric','numeric'))
 ```
 Now, if we check the class of the column, we will see the correct formats we loaded data as. ***Ok! We have successfully loaded the data set. 1st step is complete.***
+
+## **Step 02: Subset the desired data.**
+Now, we want to subset data from 2007-02-01 to 2007-02-02. We have a separate **Date** class in R to represent dates. So, we can convert the dates in variable and compare it with another date class. Default date format in R is **Year-Month-Day**. If we look at our data, dates are given as **Date/Month/Year**. So, we have to tell R the way we want to input date. So, we use the formate argument to specify date input format.
 ```
+power_consumption_data$Date <- as.Date(power_consumption_data$Date, format = "%d/%m/%Y")
+```
+Here, `as.Date()` function converts the *Date* column to Date class which was previously in character. It receives the dates as **Date/Month/Year** format. Now, if we look at the *Date* column in the dataset and check the class:
+```
+head(power_consumption_data$Date)
+ > "2006-12-16" "2006-12-16" "2006-12-16" "2006-12-16" "2006-12-16" "2006-12-16"
+class(power_consumption_data$Date)
+>"Date"
+```
+So, the *Date* column is now in Date class. 
+###**Possible Problem:***
+While formating the dates in format argument. If we use '%y' it will read only 1st two element of the year. So, when you will look up the data it will always show the 1st 2 digits with a 4 numbering format. This may create a severe problem. So, use %Y if you have a 4 digit year in the given data.
+
+Now, lets get back to the subsetting. We need to subset the data between the given dates.
+```
+power_consumption_data <- subset(power_consumption_data, Date >= as.Date("2007-2-1") & Date <= as.Date("2007-2-2"))
+```
+Now if we look at the data.
+```
+ Date     Time Global_active_power Global_reactive_power Voltage Global_intensity Sub_metering_1 Sub_metering_2 Sub_metering_3
+ 2007-02-01 00:00:00               0.326                 0.128  243.15              1.4              0              0              0
+ 2007-02-01 00:01:00               0.326                 0.130  243.32              1.4              0              0              0
+ 2007-02-01 00:02:00               0.324                 0.132  243.51              1.4              0              0              0
+ 2007-02-01 00:03:00               0.324                 0.134  243.90              1.4              0              0              0
+ 2007-02-01 00:04:00               0.322                 0.130  243.16              1.4              0              0              0
+ 2007-02-01 00:05:00               0.320                 0.126  242.29              1.4              0              0              0
+```
+Now, we have our desired data. Wait what! We have used arithmatic operations like >= and <= on date class. But how is it possible? Because dates in R generally have a numeric mode.
+
+Now, we have successfully filtered our desired data on our desired dates. ***Step 02 complete***
+## **Step 03: Date and Time to Date/Time class**
+
+Instruction number 3 said clearly that, we need to convert the Date and Time in Date/Time class. For this lets 1st combine date and time column.
+```
+DateTime<- paste(power_consumption_data$Date, power_consumption_data$Time)
+```
+We have just created a separate vector naming DateTime containing the values of Date and Time together for each element in the vector. Now, lets clean the Date and Time column in data set. Easiest way to do so is just submitting them to Null.
+```
+power_consumption_data$Date <- power_consumption_data$Time<- NULL
+```
+Now, if we look at the data set again, we will see there is no column named Date and Time.
+```
+head(power_consumption_data)
+```
+```
+      Global_active_power Global_reactive_power Voltage Global_intensity Sub_metering_1 Sub_metering_2 Sub_metering_3
+66637               0.326                 0.128  243.15              1.4              0              0              0
+66638               0.326                 0.130  243.32              1.4              0              0              0
+66639               0.324                 0.132  243.51              1.4              0              0              0
+66640               0.324                 0.134  243.90              1.4              0              0              0
+66641               0.322                 0.130  243.16              1.4              0              0              0
+66642               0.320                 0.126  242.29              1.4              0              0              0
+```
+Lets combine the **DateTime** vector with the dataset.
+```
+power_consumption_data<- cbind(DateTime, power_consumption_data)
+```
+Here, we column binded both and used the vector 1st which makes the vector to be attached as the 1st column in the datase. If we have used the dataset name 1st, it would add the vector at last of the dataset. 
+Now, lets look at the data set again
+Now, if we look at the data set again, we will see there is no column named Date and Time.
+```
+head(power_consumption_data)
+```
+```
+       DateTime          Global_active_power Global_reactive_power Voltage Global_intensity Sub_metering_1 Sub_metering_2 Sub_metering_3
+ 2007-02-01 00:00:00               0.326                 0.128  243.15              1.4              0              0              0
+ 2007-02-01 00:01:00               0.326                 0.130  243.32              1.4              0              0              0
+ 2007-02-01 00:02:00               0.324                 0.132  243.51              1.4              0              0              0
+ 2007-02-01 00:03:00               0.324                 0.134  243.90              1.4              0              0              0
+ 2007-02-01 00:04:00               0.322                 0.130  243.16              1.4              0              0              0
+ 2007-02-01 00:05:00               0.320                 0.126  242.29              1.4              0              0              0
+```
+If we look at the class of the DateTime column we have just added. We will find out that it is a facotr.
+```
+class(power_consumption_data$DateTime)
+> "factor"
+```
+It is not desirable. There is separate DateTime class in R to represent Date/Time. There are two basic classes of date/times. **"POSIXct"** is more convenient for including in data frames, and **"POSIXlt"** is closer to human-readable forms. Now, lets convert the factor variables in DateTime column in Date/Time class using `as.POSIXct()`:
+```
+power_consumption_data$DateTime <- as.POSIXct(DateTime)
+```
+Okay, Our basic preperation for the data set is done. ***Step 03 complete***
+## **Step 04: Plotting**
+#### *Plot 01:*
+Lets create a seperate .R file naming it as plot1.R and construct a png file with the given height and weidth in the question.
+```
+png(file = "plot1.png", width=480, height=480)
+```
+Lets create a histogram with `hist()`, namie it with main argument, declare labels of x and y with xlab and ylab; precise color with col argument.
+```
+hist(power_consumption_data$Global_active_power, main= "Global Active Power", xlab = "Global Active Power(kilowatts)", ylab = "Frequency", col = "red")
+```
+Then close the graphic device png with `dev.off` [This is important]
+```
+dev.off()
+```
+***Plot 01 Done***
+#### *Plot 02:*
+Lets initiate a png graphic device with different .R file same as plot 1. Then, plot Global_active_power~DateTime give it a name, lable the axis and select the plot type. In my case, i selected `type="l"` for drawing the plot as lines. There are several options for where yo can choose also. 
+```
+with(power_consumption_data, plot(DateTime, Global_active_power, type = "l",  ylab="Global Active Power (kilowatts)", xlab=""))
+```
+Now just close it as plot 1.
+#### *Plot 03:*
+Lets initiate a png graphic device with different .R file same as plot 1. Then, plot Sub_metering_1~DateTime, Sub_metering_2~DateTime, Sub_metering_3~DateTime give them names, lable the axis and select the plot type also define colors.
+```
+with(power_consumption_data, {plot(DateTime, Sub_metering_1, type = "l", ylab="Global Active Power (kilowatts)", xlab="")
+    lines(DateTime, Sub_metering_2, col = "red") 
+    lines(DateTime, Sub_metering_3, col = "blue")})
+ ```
+Finally, we add a legend with the `legend()` function explaining the meaning of the different colors in the plot.
+```
+legend("topright", col = c("black", "red", "blue"), lwd=c(1,1,1), legend = c("Sub_metering_1", "Sub_metering_2", "Sub_metering_3"))
+```
+Here, we define it to be on the topright corner of the plot, define the colors creating a color vector. We defined line width then instruct the join the colors with their annotation.
+Now just close it as plot 1.
+#### *Plot 03:*
+Lets initiate a png graphic device with different .R file same as plot 1. But here we have multiple graphs. What to do?
+
+With `par()` we can put multiple graphs in a single plot by setting some graphical parameters with the help of `par()` function. Graphical parameter **mfrow** can be used to specify the number of subplots we need. `par()` takes a vector of form c(m, n) which divides the given plot into m*n array of subplots. For example, if we need to plot two graphs side by side , we would have m=1 and n=2. The same phenomenon can be acheived with graphical parameter `mfcol`. The only difference between two is that, `mfrow` fills in the subplot region rowwise while mfcol fills it column wise. For clear understanding:
+```
+par(mfrow = c(2,1), mar = c(4,4,2,1))
+```
+Here, `mfrow = c(2,1)` set the plotting area into a 2*1 array and mar = c(4,4,2,1) is a numeric vector of length 4, which sets the margin sizes in the following order: bottom, left, top and right. The default is c(5.1, 4.1, 4.1, 2.1).
+
+
+Now lets get back to work. 1st declare a par function defining rows and margin and also the size of legend using `oma` argument.
+```
+par(mfrow=c(2,2), mar=c(4,4,2,1), oma=c(0,0,2,0))
+```
+Now just plot the varibales, give them names, lable the axis and select the plot type also define colors and legend. Now just close it as plot 1.
+
+
+# **The End**
+
+
+# **Thank You For being here**
